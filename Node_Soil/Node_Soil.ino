@@ -3,10 +3,10 @@
 #include <SD.h>
 #include <avr/sleep.h>
 #include <RTClib.h>
-#include <Adafruit_BME280.h>
+#include <SHT1x.h>
 
-String Node_ID = "902";
-int interval_min_record = 2;
+String Node_ID = "901";
+int interval_min_record = 30;
 int interval_min_test = 1;
 
 //////////////////////////////////////////////////////////
@@ -21,8 +21,10 @@ int INTERRUPT_PIN = 2;
 volatile int state = LOW;
 bool WakeUp = false;
 
-Adafruit_BME280 BME280;
-bool hasBME = false;
+#define dataPin  4
+#define clockPin 5
+SHT1x SHT1X(dataPin, clockPin);
+bool hasSHT = false;
 
 //////////////////////////////////////////////////////////
 ///////////                                    ///////////
@@ -133,8 +135,8 @@ String createDataLog(){
   String _id_ = Node_ID;
   String _date_ = String(now.day()) + "-" + String(now.month()) + "-" + String(now.year());
   String _time_ = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
-  String _temp_ = String(BME280.readTemperature());
-  String _humi_ = String(BME280.readHumidity());
+  String _temp_ = String(SHT1X.readTemperatureC());
+  String _humi_ = String(SHT1X.readHumidity());
   
   return _count_ + "\t" + _id_ + "\t" + _date_ + " " + _time_ + "   \t" + _temp_ + "\t" + _humi_;
 }
@@ -155,12 +157,12 @@ void CheckModules(){
     hasRTC = true;
   }
   //BME Sensor
-  if(!BME280.begin()){
-    Serial.println("No BME?");
-    hasBME = false;
+  if(SHT1X.readTemperatureC() < 0){
+    Serial.println("No SHT1X?");
+    hasSHT = false;
   }else{
-    Serial.println("Found BME");
-    hasBME = true;
+    Serial.println("Found SHT1X");
+    hasSHT = true;
   }
   //SD Card
   pinMode(SS, OUTPUT);
